@@ -3,7 +3,6 @@ from pygame.locals import *
 from enum import Enum
 from states.mainmenu import MainMenuState
 from states.platforming import PlatformingState
-from leveldata import load_level_data
 
 
 
