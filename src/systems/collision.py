@@ -1,4 +1,4 @@
-import random
+
 class CollisionSystem:
     def __init__(self):
         # Initialize collision system
@@ -42,24 +42,28 @@ class CollisionSystem:
 
                                 if bottom_hit:
                                     print("side hit") # originally bottom hit
-    
-        # # Check if the character is on the ground
-        # if self.character_body.contacts:
-        #     self.is_jumping = False  
-        # Check if the character is on the ground
-        # if self.character_body.contacts:
-        #     character_bottom = self.character_body.position.y + self.character.height / 2
+    def tile_character_collision(self,character, character_body,tile_bodies, is_jumping, tile_size):
+        if character_body.contacts:
+            #character_bottom = character_body.position.y + character.height / 2
+                        
+            character_left = character_body.position.x - character.width / 2
+            character_right = character_body.position.x + character.width / 2
 
-        #     for tile_body in self.tile_bodies:
-        #         tile_top = tile_body.position.y - tile_size / 2
+            for tile_body in tile_bodies:
+                
+                
+                tile_left = tile_body.position.x - tile_size / 2
+                tile_right = tile_body.position.x + tile_size / 2
 
-        #         if character_bottom > tile_top:
-        #             self.is_jumping = False
-        #             break
+                if character_right >= tile_left and character_left <= tile_left:
+                    is_jumping = False
+                elif character_left <= tile_right and character_right >= tile_right:
+                    is_jumping = False
 
-    def handle_collision(self, entity1, entity2):
-        # Handle collision between entity1 and entity2
-        pass
+
+                   
+        return is_jumping
+
     def npc_collision(self, npcs, npcs_body, character, character_body,textbox):
         # Check if the bottom of the enemy makes contact with the side of the character
         for npc, npc_body in zip(npcs, npcs_body):
@@ -74,8 +78,4 @@ class CollisionSystem:
 
                         if side_hit:
                             textbox.set_text(npc.dialogue[0])
-
-                            #print(" npc side hit") # originally bottom hit
                             return side_hit
-
-# Other functions and classes related to collision

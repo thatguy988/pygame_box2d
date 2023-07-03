@@ -10,3 +10,4 @@ class Enemy:
         # Update enemy position based on the Box2D body
         self.x = enemy_body.position.x
         self.y = enemy_body.position.y
+        

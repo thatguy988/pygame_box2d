@@ -6,9 +6,10 @@ from Box2D import *
 from entities.character import Character
 from entities.enemy import Enemy 
 from entities.npc import NPC
-from leveldata import load_level_data, get_node_id
+from leveldata.level_1 import load_level_data, get_node_id
 from systems.collision import CollisionSystem 
 from systems.movement import MovementSystem
+from camera import Camera
 from UI.textbox import TextBox
 
 BLUE = (0, 0, 255)
@@ -31,22 +32,18 @@ class PlatformingState:
         self.level_width = len(self.level_data[0]) * tile_size  # Calculate the level width based on the tile size
         self.level_height = len(self.level_data) * tile_size # Calculate the level height based on the tile size
         player_position = self.find_player_position()
-        self.camera = pygame.math.Vector2(player_position[0] * tile_size, player_position[1] * tile_size)
         self.character = Character(player_position[0] * tile_size, player_position[1] * tile_size, 50, 50)
         self.is_jumping = False  # Variable to track jump state
         self.direction_change_interval = 20.0  # Time interval for changing direction (in seconds)
         self.direction_timer = 0.0  # Timer to keep track of time passed
-        self.leftside = False
-        self.rightside = False
         self.collision = CollisionSystem()
         self.movement = MovementSystem()
         self.textbox = TextBox((50, 50), (200, 100), pygame.font.Font(None, 24), pygame.Color("white"))
         self.npc_talk = False
         self.text_render = False
         self.key_pressed = False
+        self.camera = Camera(self.screen, self.level_width, self.level_height, self.camera_speed)
 
-
-        
 
         # Create a Box2D world
         self.world = b2World(gravity=(0, 10), doSleep=True)
@@ -151,7 +148,7 @@ class PlatformingState:
 
         
         
-        self.is_jumping = self.movement.apply_force(keys, self.character_body, self.is_jumping)
+        self.is_jumping = self.movement.player_movement(keys, self.character_body, self.is_jumping)
         
         
        
@@ -182,81 +179,46 @@ class PlatformingState:
         self.character.move(self.character_body)
         self.collision.check_collision(self.enemies, self.enemies_body,self.character, self.character_body, self.world)
         self.npc_talk = self.collision.npc_collision(self.npcs, self.npcs_body, self.character, self.character_body,self.textbox)
-        for enemy, enemy_body in zip(self.enemies, self.enemies_body):
-                enemy.move(enemy_body)
-                # Apply a force to the enemy body
-                if self.direction_timer <= 0.0:
-                    # Generate a new random force for x-direction
-                    force_y = random.uniform(-5000, -5000)
-                    enemy_body.ApplyForceToCenter((0, 0), wake=True)
-                    self.direction_timer = self.direction_change_interval
-                else:
-                    self.direction_timer -= time_step
-    
-        # # Check if the character is on the ground
-        # if self.character_body.contacts:
-        #     self.is_jumping = False  
-        # Check if the character is on the ground
-        if self.character_body.contacts:
-            character_bottom = self.character_body.position.y + self.character.height / 2
+        self.movement.enemy_movement(self.enemies, self.enemies_body, self.direction_timer, self.direction_change_interval, time_step)
 
-            for tile_body in self.tile_bodies:
-                tile_top = tile_body.position.y - tile_size / 2
+        self.is_jumping = self.collision.tile_character_collision(self.character, self.character_body, self.tile_bodies, self.is_jumping, tile_size)
+        
 
-                if character_bottom > tile_top:
-                    self.is_jumping = False
-                    break
+        self.camera.update(self.character)
 
-        self.next_node()
+        self.load_next_node()
+        
+
+        
 
     def render(self):
-        # Smoothly adjust the camera position to center the player
-        camera_target = pygame.math.Vector2(
-            self.character.x - self.screen.get_width() / 2,
-            self.character.y - self.screen.get_height() / 2
-        )
-        self.camera += (camera_target - self.camera) * self.camera_speed
-        self.camera.x = max(0, min(self.camera.x, self.level_width - self.screen.get_width()))
-        self.camera.y = max(0, min(self.camera.y, self.level_height - self.screen.get_height()))
-
-
-        self.screen.fill((0, 0, 0))  # Clear the screen
-
+        # Render the game objects using the camera
+        game_objects = []
         for y, row in enumerate(self.level_data):
             for x, tile in enumerate(row):
                 if tile == 1:
-                    tile_rect = pygame.Rect(x * tile_size - self.camera.x, y * tile_size - self.camera.y, tile_size, tile_size)
-                    pygame.draw.rect(self.screen, BLUE, tile_rect)
+                    tile_rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
+                    game_objects.append((tile_rect, BLUE))
                 elif tile == 11:
-                    npc_rect = pygame.Rect(x * tile_size - self.camera.x, y * tile_size - self.camera.y, tile_size, tile_size)
-                    pygame.draw.rect(self.screen, (255,165,255), npc_rect)
-                
-        # Render the enemies
+                    npc_rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
+                    game_objects.append((npc_rect, (255, 165, 255)))
+
         for enemy in self.enemies:
-            enemy_rect = pygame.Rect(
-                enemy.x - self.camera.x,
-                enemy.y - self.camera.y,
-                enemy.width,
-                enemy.height
-            )
-            pygame.draw.rect(self.screen, (255,165,0), enemy_rect)
+            enemy_rect = pygame.Rect(enemy.x, enemy.y, enemy.width, enemy.height)
+            game_objects.append((enemy_rect, (255, 165, 0)))
 
-        # Draw the character relative to the camera position
-        character_rect = pygame.Rect(
-            self.character.x - self.camera.x,
-            self.character.y - self.camera.y,
-            self.character.width,
-            self.character.height
-        )
-        
-        pygame.draw.rect(self.screen, WHITE, character_rect)
+        character_rect = pygame.Rect(self.character.x, self.character.y, self.character.width, self.character.height)
+        game_objects.append((character_rect, WHITE))
+
+        # Render the camera view
+        self.camera.render(game_objects)
+
+        # Render the text box 
         if self.text_render:
-            print("i am here")
+            print("I am here")
             self.textbox.render(self.screen)
-
-
-
-    def next_node(self):
+        
+    def load_next_node(self):
         if self.out_of_bounds_check():
             
             next_level_id = get_node_id(self.level_id, self.exit_direction)
@@ -270,8 +232,14 @@ class PlatformingState:
                 self.enemies.clear()  # Clear list of enemies
                 self.enemies_body.clear() #Clear list of enemy body objects
                 self.tile_bodies.clear()
+                self.npcs.clear()
+                self.npcs_body.clear()
 
                 self.level_data = load_level_data(self.level_id)
+                self.level_width = len(self.level_data[0]) * tile_size  # Calculate the level width based on the tile size
+                self.level_height = len(self.level_data) * tile_size # Calculate the level height based on the tile size
+                self.camera.level_width = self.level_width
+                self.camera.level_height = self.level_height
 
                 self.update_player_position(self.exit_direction)
 
@@ -299,3 +267,11 @@ class PlatformingState:
                                 position=(x * tile_size, y * tile_size),
                                 shapes=b2PolygonShape(box=(tile_size / 2 , tile_size / 2))
                             )
+                        elif tile == 11:
+                            npc = NPC(x * tile_size, y * tile_size, 50, 50, ["Hello, there!", "How are you?", "Nice weather today!"])
+                            npc_body = self.world.CreateStaticBody(
+                                position=(x * tile_size, y * tile_size),
+                                shapes=b2PolygonShape(box=(tile_size / 2 , tile_size / 2))
+                            )
+                            self.npcs.append(npc)
+                            self.npcs_body.append(npc_body)
