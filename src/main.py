@@ -3,6 +3,8 @@ from pygame.locals import *
 from enum import Enum
 from states.mainmenu import MainMenuState
 from states.platforming import PlatformingState
+from states.pausemenu import PauseMenuState
+from states.combat import CombatState
 
 
 
@@ -12,6 +14,7 @@ class GameState(Enum):
     MAIN_MENU = 1
     PAUSE_MENU = 2
     PLATFORMING = 3
+    COMBAT = 4
 
 # Initialize Pygame
 pygame.init()
@@ -24,12 +27,18 @@ pygame.display.set_caption("State Machine Game")
 # Game variables
 state_stack = [GameState.MAIN_MENU]
 running = True
+key_pressed = False
+
 
 # Create state instances dictionary
 state_instances = {
-    GameState.MAIN_MENU: MainMenuState(screen),
-    GameState.PLATFORMING: PlatformingState(screen, 1)
+    GameState.MAIN_MENU: MainMenuState(screen, key_pressed),
+    GameState.PAUSE_MENU: PauseMenuState(screen, key_pressed),
+    GameState.PLATFORMING: PlatformingState(screen, 1, key_pressed),
+    GameState.COMBAT:CombatState(screen, key_pressed)
 }
+
+
 
 # Main game loop
 while running:
@@ -45,20 +54,42 @@ while running:
     state_instance.update()
     screen.fill((0, 0, 0))  # Clear the screen
     state_instance.render()
-
-    # Handle state transitions
-    next_state = state_instance.get_next_state()  # Method in state instance to get the next state
     
+
+    #  Handle state transitions
+    
+    next_state, key_pressed = state_instance.get_next_state()
+    
+
+    
+
     if next_state is not None:
         if next_state == 1:
-            state_stack = [GameState.MAIN_MENU]  # Reset the state stack
+            if GameState.MAIN_MENU not in state_stack:
+                state_stack = [GameState.MAIN_MENU]  # start the state stack with main menu
+            else:
+                # return to main menu from platforming state
+                state_stack.pop() #remove pause menu
+                state_stack.pop() #remove platforming state
+                state_instances[GameState.MAIN_MENU] = MainMenuState(screen, key_pressed)
+        elif next_state == 2:
+            if GameState.PAUSE_MENU not in state_stack:
+                state_stack.append(GameState.PAUSE_MENU)
+                state_instances[GameState.PAUSE_MENU] = PauseMenuState(screen, key_pressed)
         elif next_state == 3:
-            state_stack.append(GameState.PLATFORMING)  # Push the next state onto the stack
+            if GameState.PLATFORMING not in state_stack:
+                state_instances[GameState.PLATFORMING] = PlatformingState(screen, 1, key_pressed)  # Reset the state instance
+                state_stack.append(GameState.PLATFORMING)  # Push the next state onto the stack
+            else:
+                state_stack.pop()# pop pause menu, combat go back to current platforming state from combat or pause menu state
+        elif next_state == 4:
+            #from platforming state to combat state
+            if GameState.COMBAT not in state_stack:
+                state_instances[GameState.COMBAT] = CombatState(screen,key_pressed)  # Reset the state instance
+                state_stack.append(GameState.COMBAT)
 
+    
     pygame.display.flip()  # Update the display
 
-# Quit the game
+
 pygame.quit()
-
-
-

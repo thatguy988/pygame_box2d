@@ -17,7 +17,7 @@ WHITE = (255, 255, 255)
 tile_size = 64
 
 class PlatformingState:
-    def __init__(self, screen, level_id):
+    def __init__(self, screen, level_id, key_pressed):
         self.enemies = []
         self.enemies_body = []
         self.tile_bodies = []
@@ -41,7 +41,7 @@ class PlatformingState:
         self.textbox = TextBox((50, 50), (200, 100), pygame.font.Font(None, 24), pygame.Color("white"))
         self.npc_talk = False
         self.text_render = False
-        self.key_pressed = False
+        self.key_pressed = key_pressed
         self.camera = Camera(self.screen, self.level_width, self.level_height, self.camera_speed)
 
 
@@ -126,9 +126,13 @@ class PlatformingState:
 
     def handle_input(self):
         keys = pygame.key.get_pressed()
+        
 
-        if keys[K_ESCAPE]:  
-            return 1
+        if keys[K_p]:
+            self.key_pressed = True
+            return 2, self.key_pressed
+
+        
         
         if self.npc_talk is not None:
             if not self.text_render:
@@ -146,14 +150,19 @@ class PlatformingState:
         if not keys[K_f]:
             self.key_pressed = False
 
+
+        combat_state_check=self.collision.check_collision(self.enemies, self.enemies_body,self.character, self.character_body, self.world)
+
+        
+
         
         
         self.is_jumping = self.movement.player_movement(keys, self.character_body, self.is_jumping)
+        if combat_state_check == 4:
+            self.key_pressed = True
+            return combat_state_check, self.key_pressed
         
-        
-       
-
-        return None  # No state transition
+        return None, self.key_pressed  # No state transition
     
     def out_of_bounds_check(self):
         # Check if the character is out of bounds
@@ -177,7 +186,7 @@ class PlatformingState:
         self.world.Step(time_step, velocity_iterations, position_iterations)
 
         self.character.move(self.character_body)
-        self.collision.check_collision(self.enemies, self.enemies_body,self.character, self.character_body, self.world)
+        #combat_state_check=self.collision.check_collision(self.enemies, self.enemies_body,self.character, self.character_body, self.world)
         self.npc_talk = self.collision.npc_collision(self.npcs, self.npcs_body, self.character, self.character_body,self.textbox)
         self.movement.enemy_movement(self.enemies, self.enemies_body, self.direction_timer, self.direction_change_interval, time_step)
 
@@ -187,6 +196,9 @@ class PlatformingState:
         self.camera.update(self.character)
 
         self.load_next_node()
+
+
+
         
 
         

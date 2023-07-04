@@ -5,12 +5,12 @@ from pygame.locals import *
 
 
 class MainMenuState:
-    def __init__(self, screen):
+    def __init__(self, screen, key_pressed):
         self.screen = screen
         self.selected_option = 0
         self.options = ["Start Game", "Load Game", "Quit"]
         self.cursor_symbol =  ">"
-        self.key_pressed = False  #track key press
+        self.key_pressed = key_pressed  #track key press
     
     def get_next_state(self):
         return self.handle_input()
@@ -18,6 +18,8 @@ class MainMenuState:
 
     def handle_input(self):
         keys = pygame.key.get_pressed()
+        
+        
 
         if not self.key_pressed:  # Check if key is not already pressed
             if keys[K_w]:
@@ -26,17 +28,17 @@ class MainMenuState:
             elif keys[K_s]:
                 self.selected_option = (self.selected_option + 1) % len(self.options)
                 self.key_pressed = True
+            elif keys[K_SPACE]:
+                if self.options[self.selected_option] == "Start Game":
+                    return 3, True
+                if self.options[self.selected_option] == "Quit":
+                    pygame.quit()
+                    sys.exit()
         else:
-            if not (keys[K_w] or keys[K_s]):
+            if not (keys[K_w] or keys[K_s] or keys[K_SPACE]):
                 self.key_pressed = False
-        if keys[K_SPACE]:  # Check for spacebar key press
-            if self.options[self.selected_option] == "Start Game":
-                return 3 # Transition to the PlatformingState
-            if self.options[self.selected_option] == "Quit":
-                pygame.quit()  # Quit the Pygame program
-                sys.exit()  # Terminate the Python program
 
-        return None
+        return None, self.key_pressed
 
     def update(self):
         self.handle_input()

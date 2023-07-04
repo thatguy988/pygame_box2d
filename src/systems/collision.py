@@ -31,9 +31,12 @@ class CollisionSystem:
                             enemy_right = enemy_body.position.x + enemy.width / 2
 
                             if character_right >= enemy_left and character_left <= enemy_left:
-                                print("bottom hit") # originally left side hit
+                                
+                                #print("bottom hit") # originally left side hit
+                                pass
                             elif character_left <= enemy_right and character_right >= enemy_right:
-                                print("bottom hit") # originally right side hit
+                                pass
+                                #print("bottom hit") # originally right side hit
                             else:
                                 # Check if the bottom of the enemy makes contact with the side of the character
                                 enemy_bottom = enemy_body.position.y + enemy.height / 2
@@ -41,7 +44,11 @@ class CollisionSystem:
                                 bottom_hit = enemy_bottom > character_top  # Flag to track if a "side hit" occurs
 
                                 if bottom_hit:
-                                    print("side hit") # originally bottom hit
+                                    enemies.remove(enemy)
+                                    enemies_body.remove(enemy_body)
+                                    #print("side hit") # originally bottom hit
+                                    return 4
+        return None
     def tile_character_collision(self,character, character_body,tile_bodies, is_jumping, tile_size):
         if character_body.contacts:
             #character_bottom = character_body.position.y + character.height / 2
