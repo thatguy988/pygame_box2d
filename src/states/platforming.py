@@ -3,6 +3,8 @@ import random
 
 from pygame.locals import *
 from Box2D import *
+
+
 from entities.character import Character
 from entities.enemy import Enemy 
 from entities.npc import NPC
@@ -11,6 +13,9 @@ from systems.collision import CollisionSystem
 from systems.movement import MovementSystem
 from camera import Camera
 from UI.textbox import TextBox
+from pygame_gui import UIManager
+
+
 
 BLUE = (0, 0, 255)
 WHITE = (255, 255, 255)
@@ -32,13 +37,20 @@ class PlatformingState:
         self.level_width = len(self.level_data[0]) * tile_size  # Calculate the level width based on the tile size
         self.level_height = len(self.level_data) * tile_size # Calculate the level height based on the tile size
         player_position = self.find_player_position()
-        self.character = Character(player_position[0] * tile_size, player_position[1] * tile_size, 50, 50)
+        self.character = Character.create_character(player_position[0] * tile_size, player_position[1] * tile_size)
         self.is_jumping = False  # Variable to track jump state
         self.direction_change_interval = 20.0  # Time interval for changing direction (in seconds)
         self.direction_timer = 0.0  # Timer to keep track of time passed
         self.collision = CollisionSystem()
         self.movement = MovementSystem()
-        self.textbox = TextBox((50, 50), (200, 100), pygame.font.Font(None, 24), pygame.Color("white"))
+        self.ui_manager = UIManager((screen.get_width(), screen.get_height()))
+
+        #self.textbox = TextBox((50, 50), (200, 100), pygame.font.Font(None, 24), pygame.Color("white"))
+        self.textbox = TextBox((50, 50), (200, 100), pygame.font.Font(None, 24), pygame.Color("white"), self.ui_manager)
+        self.clock= pygame.time.Clock()
+
+        
+
         self.npc_talk = False
         self.text_render = False
         self.key_pressed = key_pressed
@@ -58,7 +70,7 @@ class PlatformingState:
                     )
                     self.tile_bodies.append(tile_body)
                 elif tile == 7:  # Spawn enemy at tile with value 7
-                    enemy = Enemy(x * tile_size, y * tile_size, 50, 50)
+                    enemy = Enemy.create_enemy(x *tile_size, y *tile_size, "slime")
                     enemy_body = self.world.CreateDynamicBody(
                         position=(x * tile_size, y * tile_size),
                         shapes=b2PolygonShape(box=(enemy.width / 2, enemy.height / 2)),
@@ -130,7 +142,7 @@ class PlatformingState:
 
         if keys[K_p]:
             self.key_pressed = True
-            return 2, self.key_pressed
+            return 2, self.key_pressed, None , None
 
         
         
@@ -151,7 +163,7 @@ class PlatformingState:
             self.key_pressed = False
 
 
-        combat_state_check=self.collision.check_collision(self.enemies, self.enemies_body,self.character, self.character_body, self.world)
+        combat_state_check, enemy =self.collision.check_collision(self.enemies, self.enemies_body,self.character, self.character_body, self.world)
 
         
 
@@ -160,9 +172,9 @@ class PlatformingState:
         self.is_jumping = self.movement.player_movement(keys, self.character_body, self.is_jumping)
         if combat_state_check == 4:
             self.key_pressed = True
-            return combat_state_check, self.key_pressed
-        
-        return None, self.key_pressed  # No state transition
+            return combat_state_check, self.key_pressed, self.character, enemy
+        else:
+            return None, self.key_pressed, None, None  # No state transition
     
     def out_of_bounds_check(self):
         # Check if the character is out of bounds
@@ -204,6 +216,9 @@ class PlatformingState:
         
 
     def render(self):
+        
+
+
         # Render the game objects using the camera
         game_objects = []
         for y, row in enumerate(self.level_data):
@@ -225,10 +240,19 @@ class PlatformingState:
         # Render the camera view
         self.camera.render(game_objects)
 
-        # Render the text box 
+        
         if self.text_render:
-            print("I am here")
-            self.textbox.render(self.screen)
+            delta_time = self.clock.tick(60) / 1000.0  # Assuming 60 FPS as the desired frame rate
+
+            self.textbox.container.rect.center = (150, 100)  # Adjust the position of the text box container
+            self.textbox.container.update(delta_time)
+            self.textbox.textbox.update(delta_time)
+            text_surface = self.textbox.font.render(self.textbox.text, True, self.textbox.color)
+            self.screen.blit(text_surface, self.textbox.position)
+
+            
+
+
         
     def load_next_node(self):
         if self.out_of_bounds_check():

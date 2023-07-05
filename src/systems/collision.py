@@ -4,6 +4,9 @@ class CollisionSystem:
         # Initialize collision system
         pass
 
+    def handle_collision():
+        pass
+
     def check_collision(self, enemies, enemies_body,character, character_body, world):
         # Update enemy positions based on the Box2D bodies
         for enemy, enemy_body in zip(enemies, enemies_body):
@@ -19,7 +22,6 @@ class CollisionSystem:
                         top_hit = character_bottom < enemy_top  # Flag to track if a "Top hit" occurs
 
                         if top_hit:
-                            print("Top hit")
                             enemies.remove(enemy) #remove enemy
                             world.DestroyBody(enemy_body) #remove object from world
                             enemies_body.remove(enemy_body)  #remove  objec from list 
@@ -44,11 +46,13 @@ class CollisionSystem:
                                 bottom_hit = enemy_bottom > character_top  # Flag to track if a "side hit" occurs
 
                                 if bottom_hit:
+                                    enemy_attack = enemy # Assign the enemy object to a variable
                                     enemies.remove(enemy)
+                                    world.DestroyBody(enemy_body) #remove object from world
                                     enemies_body.remove(enemy_body)
                                     #print("side hit") # originally bottom hit
-                                    return 4
-        return None
+                                    return 4, enemy_attack
+        return None, None
     def tile_character_collision(self,character, character_body,tile_bodies, is_jumping, tile_size):
         if character_body.contacts:
             #character_bottom = character_body.position.y + character.height / 2
