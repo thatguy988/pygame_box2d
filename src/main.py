@@ -6,7 +6,7 @@ from states.platforming import PlatformingState
 from states.pausemenu import PauseMenuState
 from states.combat import CombatState
 
-
+from game_manager import GameManager
 
 
 # State enumeration
@@ -29,13 +29,14 @@ state_stack = [GameState.MAIN_MENU]
 running = True
 key_pressed = False
 
+game_manager= GameManager()
 
 # Create state instances dictionary
 state_instances = {
-    GameState.MAIN_MENU: MainMenuState(screen, key_pressed),
-    GameState.PAUSE_MENU: PauseMenuState(screen, key_pressed),
-    GameState.PLATFORMING: PlatformingState(screen, 1, key_pressed),
-    GameState.COMBAT:CombatState(screen, key_pressed, None, None)
+    GameState.MAIN_MENU: MainMenuState(screen, key_pressed, game_manager),
+    GameState.PAUSE_MENU: PauseMenuState(screen, key_pressed, game_manager),
+    GameState.PLATFORMING: PlatformingState(screen, 1, key_pressed,game_manager),
+    GameState.COMBAT:CombatState(screen, key_pressed, None, None, game_manager)
 }
 
 
@@ -71,21 +72,21 @@ while running:
                 # return to main menu from platforming state
                 state_stack.pop() #remove pause menu
                 state_stack.pop() #remove platforming state
-                state_instances[GameState.MAIN_MENU] = MainMenuState(screen, key_pressed)
+                state_instances[GameState.MAIN_MENU] = MainMenuState(screen, key_pressed, game_manager)
         elif next_state == 2:
             if GameState.PAUSE_MENU not in state_stack:
                 state_stack.append(GameState.PAUSE_MENU)
-                state_instances[GameState.PAUSE_MENU] = PauseMenuState(screen, key_pressed)
+                state_instances[GameState.PAUSE_MENU] = PauseMenuState(screen, key_pressed,game_manager)
         elif next_state == 3:
             if GameState.PLATFORMING not in state_stack:
-                state_instances[GameState.PLATFORMING] = PlatformingState(screen, 1, key_pressed)  # Reset the state instance
+                state_instances[GameState.PLATFORMING] = PlatformingState(screen, 1, key_pressed, game_manager)  # Reset the state instance
                 state_stack.append(GameState.PLATFORMING)  # Push the next state onto the stack
             else:
                 state_stack.pop()# pop pause menu, combat go back to current platforming state from combat or pause menu state
         elif next_state == 4:
             #from platforming state to combat state
             if GameState.COMBAT not in state_stack:
-                state_instances[GameState.COMBAT] = CombatState(screen,key_pressed,character,enemy)  # Reset the state instance
+                state_instances[GameState.COMBAT] = CombatState(screen,key_pressed,character,enemy, game_manager)  # Reset the state instance
                 state_stack.append(GameState.COMBAT)
 
     

@@ -5,7 +5,7 @@ from UI.combat_menu import CombatMenus
 
 
 class CombatState:
-    def __init__(self, screen, key_pressed, character, enemy):
+    def __init__(self, screen, key_pressed, character, enemy, game_manager):
         self.screen = screen
         self.key_pressed = key_pressed
         self.character = character

@@ -2,7 +2,7 @@ import pygame
 from pygame.locals import *
 
 class PauseMenuState:
-    def __init__(self, screen,key_pressed):
+    def __init__(self, screen,key_pressed,game_manager):
         self.screen = screen
         self.selected_option = 0
         self.options = ["Resume Game", "Save Game", "Quit"]

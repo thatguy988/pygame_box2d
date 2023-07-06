@@ -5,7 +5,7 @@ from pygame.locals import *
 
 
 class MainMenuState:
-    def __init__(self, screen, key_pressed):
+    def __init__(self, screen, key_pressed, game_manager):
         self.screen = screen
         self.selected_option = 0
         self.options = ["Start Game", "Load Game", "Quit"]
