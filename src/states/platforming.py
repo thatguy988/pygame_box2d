@@ -7,6 +7,8 @@ from Box2D import *
 
 BLUE = (0, 0, 255)
 WHITE = (255, 255, 255)
+ORANGE = (255, 165, 0)
+PINK = (255, 165, 255)
 tile_size = 64
 
 class PlatformingState:
@@ -92,10 +94,10 @@ class PlatformingState:
         game_objects += [(pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size), BLUE) for y, row in enumerate(self.game_manager.level_data) for x, tile in enumerate(row) if tile == 1]
 
         # Add NPCs to game_objects
-        game_objects += [(pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size), (255, 165, 255)) for y, row in enumerate(self.game_manager.level_data) for x, tile in enumerate(row) if tile == 11]
+        game_objects += [(pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size), PINK) for y, row in enumerate(self.game_manager.level_data) for x, tile in enumerate(row) if tile == 11]
 
         # Add enemies to game_objects
-        game_objects += [(pygame.Rect(enemy.x, enemy.y, enemy.width, enemy.height), (255, 165, 0)) for enemy in self.game_manager.enemies]
+        game_objects += [(pygame.Rect(enemy.x, enemy.y, enemy.width, enemy.height), ORANGE) for enemy in self.game_manager.enemies]
 
         # Add character to game_objects
         game_objects.append((pygame.Rect(self.game_manager.character.x, self.game_manager.character.y, self.game_manager.character.width, self.game_manager.character.height), WHITE))
