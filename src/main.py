@@ -36,7 +36,7 @@ state_instances = {
     GameState.MAIN_MENU: MainMenuState(screen, key_pressed, game_manager),
     GameState.PAUSE_MENU: PauseMenuState(screen, key_pressed, game_manager),
     GameState.PLATFORMING: PlatformingState(screen, 1, key_pressed,game_manager),
-    GameState.COMBAT:CombatState(screen, key_pressed, None, None, game_manager)
+    GameState.COMBAT:CombatState(screen, key_pressed, game_manager, None)
 }
 
 
@@ -86,7 +86,7 @@ while running:
         elif next_state == 4:
             #from platforming state to combat state
             if GameState.COMBAT not in state_stack:
-                state_instances[GameState.COMBAT] = CombatState(screen,key_pressed,character,enemy, game_manager)  # Reset the state instance
+                state_instances[GameState.COMBAT] = CombatState(screen,key_pressed,game_manager,enemy)  # Reset the state instance
                 state_stack.append(GameState.COMBAT)
 
     

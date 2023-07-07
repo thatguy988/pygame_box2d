@@ -11,6 +11,7 @@ class Enemy:
         self.strength = strength
         self.weakness = weakness
         self.attack_power = attack_power
+        self.id_number = None
 
         
     #spawn enemies using value of 7 in element of array

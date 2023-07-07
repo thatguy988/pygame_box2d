@@ -7,9 +7,10 @@ class Character:
         self.height = height
         self.health = 100
         self.magic_points = 100
+        self.name = "Player 1"
         
-        self.strength = "fire" 
-        self.weakness = "water"
+        self.strength = "Fire" 
+        self.weakness = "Water"
         self.attack_power = 5
         
     def move(self,character_body):
