@@ -8,7 +8,7 @@ from Box2D import *
 from entities.character import Character
 from entities.enemy import Enemy 
 from entities.npc import NPC
-from leveldata.level_1 import load_level_data, get_node_id
+from leveldata.load_data import load_level_data, get_node_id
 from systems.collision import CollisionSystem 
 from systems.movement import MovementSystem
 from camera import Camera
@@ -36,7 +36,10 @@ class GameManager:
         self.level_width = len(self.level_data[0]) * tile_size  # Calculate the level width based on the tile size
         self.level_height = len(self.level_data) * tile_size # Calculate the level height based on the tile size
         player_position = self.find_player_position()
-        self.character = Character.create_character(player_position[0] * tile_size, player_position[1] * tile_size)
+        self.character = Character.create_character(player_position[0] * tile_size, player_position[1] * tile_size, "Player 1")
+        self.companion_1 = Character.create_character(0, 0, "Player 2")
+        self.companion_2 = Character.create_character(0, 0, "Player 3")
+        self.companion_3 = Character.create_character(0, 0, "Player 4")
         
         self.is_jumping = False  # Variable to track jump state
         self.direction_change_interval = 20.0  # Time interval for changing direction (in seconds)

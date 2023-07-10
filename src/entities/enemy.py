@@ -1,53 +1,40 @@
-
 class Enemy:
-    def __init__(self, x, y, width, height, enemy_type, strength, weakness, attack_power):
+    enemy_data = {
+        "slime": {
+            "health": 20,
+            "magic_points":30,
+            "strength": "Lightning",
+            "weakness": "Earth",
+            "attack_power": 5
+        }
+        
+    }
+
+    def __init__(self, x, y, width, height, enemy_type):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
         self.enemy_type = enemy_type
-        self.health = 20
-        self.magic_points = 30
-        self.strength = strength
-        self.weakness = weakness
-        self.attack_power = attack_power
+        data = Enemy.enemy_data.get(enemy_type, {})
+        self.health = data.get("health")
+        self.magic_points = data.get("magic_points")
+        self.strength = data.get("strength")
+        self.weakness = data.get("weakness")
+        self.attack_power = data.get("attack_power")
         self.id_number = None
+        self.alive = True
 
-        
-    #spawn enemies using value of 7 in element of array
-    def move(self,enemy_body):
+    def move(self, enemy_body):
         # Update enemy position based on the Box2D body
         self.x = enemy_body.position.x
         self.y = enemy_body.position.y
-
 
     @staticmethod
     def create_enemy(x_position, y_position, enemy_type):
         x = x_position
         y = y_position
-        width = 50  
+        width = 50
         height = 50
-        strength = Enemy.define_strength(enemy_type)  
-        weakness = Enemy.define_weakness(enemy_type)
-        attack_power = Enemy.define_attack_power(enemy_type)
 
-        # Create and return a new enemy object
-        return Enemy(x, y, width, height, enemy_type, strength, weakness, attack_power)
-    
-
-
-    def define_strength(enemy_type):
-        if (enemy_type == "slime"):
-            return "thunder"
-        
-
-    def define_weakness(enemy_type):
-        if (enemy_type == "slime"):
-            return "earth"
-
-
-    def define_attack_power(enemy_type):
-        if (enemy_type == "slime "):
-            return 5
-        
-        
+        return Enemy(x, y, width, height, enemy_type)

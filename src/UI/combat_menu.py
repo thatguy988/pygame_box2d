@@ -3,7 +3,7 @@ import pygame
 import pygame_gui
 
 class CombatMenus:
-    def __init__(self, screen, character_health,character_magic_points,character_name,enemies):
+    def __init__(self, screen, player_characters,enemies):
         self.screen = screen
         self.manager = pygame_gui.UIManager(screen.get_size())
 
@@ -24,12 +24,19 @@ class CombatMenus:
 
         self.current_enemy_option_index = 0
         self.enemy_options = []
+        self.selected_action_option = None
+        self.selected_enemy_option = None
+        self.selected_magic = False
 
         # UITextBoxes
         self.menu_option_boxes = []
         self.magic_option_boxes = []
 
         self.enemy_option_boxes = []
+
+        self.character_names = []
+        self.character_healths = []
+        self.character_magic_points = []
 
         for i, option in enumerate(self.options):
             cursor = self.cursor_symbol if i == self.current_option_index else " "
@@ -49,22 +56,27 @@ class CombatMenus:
             )
             self.magic_option_boxes.append(magic_text)
             magic_text.hide()
-        self.character_name_text = pygame_gui.elements.UITextBox(
-            relative_rect=pygame.Rect((10, screen.get_height() - 70), (200, 30)),
-            manager=self.manager,
-            html_text=f"Health: {character_name}"
-        )
-        # Render player character's health and magic points
-        self.character_health_text = pygame_gui.elements.UITextBox(
-            relative_rect=pygame.Rect((10, screen.get_height() - 50), (200, 30)),
-            manager=self.manager,
-            html_text=f"Health: {character_health}"
-        )
-        self.character_magic_text = pygame_gui.elements.UITextBox(
-            relative_rect=pygame.Rect((10, screen.get_height() - 30), (200, 30)),
-            manager=self.manager,
-            html_text=f"Magic: {character_magic_points}"
-        )
+
+        for i, character in enumerate(player_characters):
+            character_name_text = pygame_gui.elements.UITextBox(
+                relative_rect=pygame.Rect((i * 150, screen.get_height() - 70), (200, 30)),
+                manager=self.manager,
+                html_text=f"Health: {character.name}"
+            )
+            self.character_names.append(character_name_text)
+            character_health_text = pygame_gui.elements.UITextBox(
+                relative_rect=pygame.Rect((i * 150, screen.get_height() - 50), (200, 30)),
+                manager=self.manager,
+                html_text=f"Health: {character.health}"
+            )
+            self.character_healths.append(character_health_text)
+            character_magic_text = pygame_gui.elements.UITextBox(
+                relative_rect=pygame.Rect((i * 150, screen.get_height() - 30), (200, 30)),
+                manager=self.manager,
+                html_text=f"Magic: {character.magic_points}"
+            )
+            self.character_magic_points.append(character_magic_text)
+
         for i, enemy in enumerate(enemies):
             cursor = self.cursor_symbol if i == 0 else " "
             enemy_text = pygame_gui.elements.UITextBox(
@@ -76,25 +88,35 @@ class CombatMenus:
             self.enemy_option_boxes.append(enemy_text)
             enemy_text.hide()
 
-
     def handle_input(self):
         keys = pygame.key.get_pressed()
-
+        if self.selected_action_option and self.selected_enemy_option:
+            self.selected_action_option = None
+            self.selected_enemy_option = None
+            
         if not self.key_pressed:
             if not self.show_enemy_boxes:
                 if not self.show_magic:
                     self.handle_menu_navigation(keys)
                     selected_option = self.handle_menu_selection(keys)
                     if selected_option == 'Attack':
+                        self.selected_action_option = selected_option
                         self.show_enemy_options()
                     elif selected_option == 'Flee':
-                        return selected_option
+                        self.selected_action_option = selected_option
+                        return self.selected_action_option , 1
                     elif selected_option == 'Magic':
+                        self.selected_magic = True
                         self.show_magic_menu()
                 else:
                     self.handle_magic_navigation(keys)
                     selected_option = self.handle_magic_selection(keys)
-                    if selected_option:
+                    if selected_option == 'Healing':
+                        pass
+                        #self.selected_action_option = selected_option
+                        #self.show_player_side()
+                    elif selected_option in ['Fire', 'Water', 'Lightning', 'Earth']:
+                        self.selected_action_option = selected_option
                         self.show_enemy_options()
                     elif keys[pygame.K_a]:
                         self.key_pressed = True
@@ -103,7 +125,12 @@ class CombatMenus:
                 self.handle_enemy_navigation(keys)
                 selected_option=self.handle_enemy_selection(keys)
                 if selected_option:
-                    return selected_option
+                    self.selected_enemy_option = selected_option
+                    self.remove_enemy_options()
+                    if self.selected_magic:
+                        self.remove_magic_menu()
+                        self.selected_magic = not self.selected_magic
+                    return self.selected_action_option, self.selected_enemy_option
                 elif keys[pygame.K_a]:
                     self.key_pressed = True
                     self.remove_enemy_options()
@@ -111,6 +138,8 @@ class CombatMenus:
         else:
             if not (keys[pygame.K_w] or keys[pygame.K_s] or keys[pygame.K_SPACE] or keys[pygame.K_a]):
                 self.key_pressed = False
+        
+        return self.selected_action_option, self.selected_enemy_option  # Default return values when no option is selected
 
     def handle_menu_navigation(self, keys):
         if keys[pygame.K_w]:
@@ -178,7 +207,7 @@ class CombatMenus:
         for magic_text in self.magic_option_boxes:
             magic_text.hide()
 
-    def render(self,character_health, character_magic_points, character_name,enemies):
+    def render(self,player_characters,enemies):
 
         # Render the menu options
         for i, option in enumerate(self.options):
@@ -192,9 +221,18 @@ class CombatMenus:
                 cursor = self.cursor_symbol if i == self.current_magic_option_index else " "
                 text = self.magic_option_boxes[i]
                 text.set_text(f"{cursor} {magic_option}")
-        self.character_health_text.set_text(f"Health: {character_health}")
-        self.character_magic_text.set_text(f"Magic: {character_magic_points}")
-        self.character_name_text.set_text(f"{character_name}")
+
+        # Render character names, health, and magic points
+        for i, character in enumerate(player_characters):
+            character_name_text = self.character_names[i]
+            character_name_text.set_text(f"Name: {character.name}")
+
+            character_health_text = self.character_healths[i]
+            character_health_text.set_text(f"Health: {character.health}")
+
+            character_magic_text = self.character_magic_points[i]
+            character_magic_text.set_text(f"Magic: {character.magic_points}")
+
         if self.show_enemy_boxes:
             for i, enemy in enumerate(enemies):
                 cursor = self.cursor_symbol if i == self.current_enemy_option_index else " "
@@ -203,73 +241,6 @@ class CombatMenus:
 
         self.manager.update(pygame.time.get_ticks() / 1000.0)
         self.manager.draw_ui(self.screen)
-
-        #return attack, enemy object 
-        #return magic attack, enemy object
-
-
-
-            # def handle_input(self):
-    #     keys = pygame.key.get_pressed()
-
-    #     if not self.key_pressed:
-    #         # Handle menu navigation
-    #         if not self.show_magic and not self.show_enemy_options:
-    #             if keys[pygame.K_w]:
-    #                 self.key_pressed = True
-    #                 self.current_option_index -= 1
-    #                 if self.current_option_index < 0:
-    #                     self.current_option_index = len(self.options) - 1
-    #             elif keys[pygame.K_s]:
-    #                 self.key_pressed = True
-    #                 self.current_option_index += 1
-    #                 if self.current_option_index >= len(self.options):
-    #                     self.current_option_index = 0
-    #             # Handle selecting menu option
-    #             elif keys[pygame.K_SPACE]:
-    #                 self.key_pressed = True
-    #                 selected_option = self.options[self.current_option_index]
-    #                 if selected_option == 'Attack':
-    #                     self.show_attack_options()
-    #                 if selected_option == 'Flee':
-    #                     return selected_option
-
-    #                 if selected_option == 'Magic':
-    #                     self.show_magic_menu()
-                    
-    #         elif self.show_magic and not self.show_enemy_options:  # navigate magic options
-    #             if keys[pygame.K_w]:
-    #                 self.key_pressed = True
-    #                 self.current_magic_option_index -= 1
-    #                 if self.current_magic_option_index < 0:
-    #                     self.current_magic_option_index = len(self.magic_options) - 1
-    #             elif keys[pygame.K_s]:
-    #                 self.key_pressed = True
-    #                 self.current_magic_option_index += 1
-    #                 if self.current_magic_option_index >= len(self.magic_options):
-    #                     self.current_magic_option_index = 0
-    #             elif keys[pygame.K_SPACE]:
-    #                 self.key_pressed=True
-    #                 selected_option=self.magic_options[self.current_magic_option_index]
-    #                 self.show_attack_options()
-    #             elif keys[pygame.K_a]:
-    #                 self.key_pressed = True
-    #                 self.remove_magic_menu()
-    #         elif not self.show_magic and self.show_enemy_options: #player selected attack now we select enemy
-    #             print("selected attack option select what enemy to attack")
-    #             if keys[pygame.K_a]:
-    #                 self.key_pressed = True
-    #                 self.remove_attack_options()
-    #         elif self.show_magic and self.show_enemy_options:
-    #             print("selected magic option attack enemy with magic")
-    #             if keys[pygame.K_a]:
-    #                 self.key_pressed = True
-    #                 self.remove_attack_options()
-
-
-    #     else:
-    #         if not (keys[pygame.K_w] or keys[pygame.K_s] or keys[pygame.K_SPACE] or keys[pygame.K_a]):
-    #             self.key_pressed = False
 
 
 
