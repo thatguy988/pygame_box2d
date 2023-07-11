@@ -23,7 +23,7 @@ class CombatState:
 
         if enemy != None:
             # Duplicate the enemy object randomly
-            num_enemies = random.randint(1, 8)
+            num_enemies = random.randint(1, 2)
             self.enemies = [self.duplicate_enemy(enemy) for _ in range(num_enemies)]
 
             # Get the screen dimensions
@@ -74,15 +74,65 @@ class CombatState:
         return self.handle_input()
     
     def handle_input(self):
+        
+        self.combat_system.check_if_all_enemies_dead()
+        if(self.combat_system.game_over == True):    
+            return 3, True
 
-        attack_or_magic_option, entity_selected=self.combat_menus.handle_input()  # Call handle_input method of CombatMenus
-        if entity_selected != None:
-            # Perform the action using the CombatSystem
-            result = self.combat_system.perform_action(attack_or_magic_option, entity_selected)
-            if result == 'Flee':
-                return 3, True
-            print(result)
+                
+        if(self.combat_system.players_turn):
+            if(self.combat_system.check_if_players_turn()):
+                character_taking_action = self.player_characters[self.combat_system.player_index]
+                while(not character_taking_action.alive):
+                    self.combat_system.player_index += 1
+                    if(self.combat_system.player_index == len(self.player_characters)):
+                        self.combat_system.player_index = 0
+                    character_taking_action = self.player_characters[self.combat_system.player_index]
+
+                attack_or_magic_option, entity_selected=self.combat_menus.handle_input()  # Call handle_input method of CombatMenus
+                if entity_selected != None:
+                    # Perform the action using the CombatSystem
+                    result = self.combat_system.perform_action(attack_or_magic_option, entity_selected,character_taking_action)
+                    if result == 'Flee':
+                        return 3, True
+                    if attack_or_magic_option != 'Flee':
+                        self.combat_system.check_if_alive(entity_selected)
+                        self.combat_system.player_index += 1
+                        if(self.combat_system.player_index == len(self.player_characters)):
+                            self.combat_system.player_index = 0
             
+                    
+                    
+            else:
+                self.combat_system.num_turns_enemies = self.combat_system.calculate_num_turns(self.enemies)
+                self.combat_system.players_turn = False
+                self.combat_system.enemy_index = 0
+        else:
+            if(self.combat_system.check_if_enemies_turn()):
+                enemy_taking_action = self.combat_system.enemies[self.combat_system.enemy_index]
+                while(not enemy_taking_action.alive):
+                    self.combat_system.enemy_index += 1
+                    if(self.combat_system.enemy_index == len(self.combat_system.enemies)):
+                        self.combat_system.player_index = 0
+                    enemy_taking_action = self.combat_system.enemies[self.combat_system.enemy_index]
+
+
+                attack_or_magic_option, entity_selected=self.combat_system.handle_enemy_input()
+                self.combat_system.enemy_perform_action(attack_or_magic_option,entity_selected, enemy_taking_action)
+                self.combat_system.check_if_alive(entity_selected)
+                self.combat_system.enemy_index += 1
+                if(self.combat_system.enemy_index == len(self.combat_system.enemies)):
+                    self.combat_system.enemy_index = 0
+            else:
+                self.combat_system.num_turns_player = self.combat_system.calculate_num_turns(self.player_characters)
+                self.combat_system.players_turn = True
+                self.combat_system.player_index = 0
+                
+        if(self.combat_system.game_over == True):
+            return 3, True
+
+            
+
         return None, None
 
 
@@ -107,21 +157,4 @@ class CombatState:
             pygame.draw.rect(self.screen, (255, 165, 0), enemy_rect)
         self.combat_menus.render(self.player_characters,self.enemies)  # Call render method of CombatMenus
 
-
-        #self.combat_menus.render(self.character.health,self.character.magic_points, self.character.name,self.enemies)  # Call render method of CombatMenus
-
-
-
-
-
-
-
-
-
-
-
-
         
-
-
-
