@@ -61,6 +61,12 @@ class Character:
 
         return Character(x, y, width, height, name)
 
+    def restore_health_and_magic(self):
+        data = Character.character_data.get(self.name, {})
+        self.health = data.get("health")
+        self.magic_points = data.get("magic_points")
+        self.alive = True
+
         
 
     

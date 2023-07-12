@@ -1,7 +1,7 @@
 class Enemy:
     enemy_data = {
         "slime": {
-            "health": 20,
+            "health": 50,
             "magic_points":30,
             "strength": "Lightning",
             "weakness": "Earth",
@@ -24,6 +24,7 @@ class Enemy:
         self.attack_power = data.get("attack_power")
         self.id_number = None
         self.alive = True
+        self.rect = None
 
     def move(self, enemy_body):
         # Update enemy position based on the Box2D body

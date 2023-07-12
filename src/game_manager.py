@@ -138,6 +138,7 @@ class GameManager:
             return True
         
     def update_player_position(self, exit_direction):
+        #switch tile to spawn at 3,4,5, or 6
         tile_mapping = {
             "right": 3,
             "left": 4,

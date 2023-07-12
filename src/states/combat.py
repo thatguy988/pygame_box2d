@@ -1,7 +1,7 @@
 import pygame
 from pygame.locals import *
-import pygame_gui
 from UI.combat_menu import CombatMenus
+
 from entities.enemy import Enemy 
 import random
 from systems.combat_system import CombatSystem
@@ -23,7 +23,7 @@ class CombatState:
 
         if enemy != None:
             # Duplicate the enemy object randomly
-            num_enemies = random.randint(1, 2)
+            num_enemies = random.randint(3, 5)
             self.enemies = [self.duplicate_enemy(enemy) for _ in range(num_enemies)]
 
             # Get the screen dimensions
@@ -55,7 +55,7 @@ class CombatState:
                 enemy_y_offset = row_index * (enemy_height + 10)
                 enemy_rect = pygame.Rect(enemy_x + enemy_x_offset, enemy_y + enemy_y_offset, enemy_width, enemy_height)
                 enemy.id_number = i+1
-                self.enemy_rects.append(enemy_rect)
+                enemy.rect = enemy_rect
 
             self.combat_menus = \
                 CombatMenus(screen, self.player_characters, self.enemies)
@@ -76,10 +76,13 @@ class CombatState:
     def handle_input(self):
         
         self.combat_system.check_if_all_enemies_dead()
-        if(self.combat_system.game_over == True):    
+        self.combat_system.check_if_all_player_characters_dead()
+        if self.combat_system.battle_succesful:
+            [character.restore_health_and_magic() for character in self.player_characters]
             return 3, True
+        if self.combat_system.game_over:
+            return 1, True
 
-                
         if(self.combat_system.players_turn):
             if(self.combat_system.check_if_players_turn()):
                 character_taking_action = self.player_characters[self.combat_system.player_index]
@@ -96,13 +99,16 @@ class CombatState:
                     if result == 'Flee':
                         return 3, True
                     if attack_or_magic_option != 'Flee':
-                        self.combat_system.check_if_alive(entity_selected)
-                        self.combat_system.player_index += 1
-                        if(self.combat_system.player_index == len(self.player_characters)):
-                            self.combat_system.player_index = 0
-            
-                    
-                    
+                        Redraw = self.combat_system.check_if_alive(entity_selected)
+                        if Redraw == False:
+                            self.combat_menus.enemy_dead(self.combat_system.enemies)
+                            self.combat_system.reorganize()
+                            Redraw = True
+                        
+                    self.combat_system.player_index += 1
+                    if(self.combat_system.player_index == len(self.player_characters)):
+                        self.combat_system.player_index = 0
+               
             else:
                 self.combat_system.num_turns_enemies = self.combat_system.calculate_num_turns(self.enemies)
                 self.combat_system.players_turn = False
@@ -116,10 +122,10 @@ class CombatState:
                         self.combat_system.player_index = 0
                     enemy_taking_action = self.combat_system.enemies[self.combat_system.enemy_index]
 
-
                 attack_or_magic_option, entity_selected=self.combat_system.handle_enemy_input()
                 self.combat_system.enemy_perform_action(attack_or_magic_option,entity_selected, enemy_taking_action)
                 self.combat_system.check_if_alive(entity_selected)
+                
                 self.combat_system.enemy_index += 1
                 if(self.combat_system.enemy_index == len(self.combat_system.enemies)):
                     self.combat_system.enemy_index = 0
@@ -130,8 +136,6 @@ class CombatState:
                 
         if(self.combat_system.game_over == True):
             return 3, True
-
-            
 
         return None, None
 
@@ -152,9 +156,11 @@ class CombatState:
                 color = color_mapping[i % len(color_mapping)]  # Select color based on index
                 pygame.draw.rect(self.screen, color, character.rect)
 
-        
-        for enemy_rect in self.enemy_rects:
-            pygame.draw.rect(self.screen, (255, 165, 0), enemy_rect)
-        self.combat_menus.render(self.player_characters,self.enemies)  # Call render method of CombatMenus
+        for i, enemy in enumerate(self.combat_system.enemies):
+            if enemy.alive:
+                pygame.draw.rect(self.screen, (255, 165, 0), enemy.rect)
+        self.combat_menus.render(self.player_characters,self.combat_system.enemies,
+                                 self.combat_system.num_turns_player,
+                                 self.player_characters[self.combat_system.player_index])  # Call render method of CombatMenus
 
         

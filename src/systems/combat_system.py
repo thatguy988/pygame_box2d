@@ -11,6 +11,7 @@ class CombatSystem:
         self.player_index = 0
         self.enemy_index = 0
         self.game_over = False
+        self.battle_succesful = False
 
     def calculate_num_turns(self, entities):
         num_turns = sum(1 for entity in entities if entity.alive)
@@ -31,15 +32,24 @@ class CombatSystem:
     def check_if_alive(self,entity_selected):
         if(entity_selected.health <= 0):
             entity_selected.alive = False
+            return False
+        return True
 
 
     def check_if_all_enemies_dead(self):
         alive_enemies = [enemy for enemy in self.enemies if enemy.alive]
         if (alive_enemies == []):
-            print("Battle Successful")
-            
+            self.battle_succesful = True
+
+    def check_if_all_player_characters_dead(self):
+        alive_characters = [character for character in self.characters if character.alive]
+        if (alive_characters == []):
             self.game_over = True
     
+    def reorganize(self):
+        alive_enemies = [enemy for enemy in self.enemies if enemy.alive]
+        self.enemies = alive_enemies
+
     
     def perform_action(self, attack_or_magic_option, entity_selected, character_taking_action):
         if attack_or_magic_option == 'Attack':
@@ -80,7 +90,8 @@ class CombatSystem:
             return "Successful magic attack (1 turn)"
         
     def perform_flee(self):
-        flee_success = random.random() < 0.5  # 50% chance of success
+        flee_success = random.random() < 0.2  # 50% chance of success
+        self.num_turns_player -= 1
         return flee_success
         
 

@@ -88,6 +88,17 @@ class CombatMenus:
             self.enemy_option_boxes.append(enemy_text)
             enemy_text.hide()
 
+        self.turn_counter_text = pygame_gui.elements.UITextBox(
+            relative_rect=pygame.Rect((screen.get_width()/3.5, 10), (200, 30)),
+            manager=self.manager,
+            html_text=f"Turn: {len(player_characters)}"
+        )
+        self.characters_turn = pygame_gui.elements.UITextBox(
+            relative_rect=pygame.Rect((screen.get_width()/40, 10), (200, 30)),
+            manager=self.manager,
+            html_text=f"Whose Turn: {player_characters[0].name}"
+        )
+
     def handle_input(self):
         keys = pygame.key.get_pressed()
         if self.selected_action_option and self.selected_enemy_option:
@@ -170,12 +181,14 @@ class CombatMenus:
             return selected_option
         
     def handle_enemy_navigation(self,keys):
-        if keys[pygame.K_w]:
-            self.current_enemy_option_index = (self.current_enemy_option_index - 1) % len(self.enemy_options)
-            self.key_pressed = True
-        elif keys[pygame.K_s]:
-            self.current_enemy_option_index = (self.current_enemy_option_index + 1) % len(self.enemy_options)
-            self.key_pressed = True
+            if keys[pygame.K_w]:
+                self.current_enemy_option_index = (self.current_enemy_option_index - 1) % len(self.enemy_options)
+                self.key_pressed = True
+            elif keys[pygame.K_s]:
+                self.current_enemy_option_index = (self.current_enemy_option_index + 1) % len(self.enemy_options)
+                self.key_pressed = True
+        
+        
 
 
     def handle_enemy_selection(self, keys):
@@ -207,7 +220,26 @@ class CombatMenus:
         for magic_text in self.magic_option_boxes:
             magic_text.hide()
 
-    def render(self,player_characters,enemies):
+    def enemy_dead(self, enemies):
+        alive_enemies = [enemy for enemy in enemies if enemy.alive]
+        self.enemy_option_boxes = []
+        self.enemy_options = []
+        for i, enemy in enumerate(alive_enemies):
+            cursor = self.cursor_symbol if i == 0 else " "
+            enemy_text = pygame_gui.elements.UITextBox(
+                relative_rect=pygame.Rect((500, 350 + i * 30), (200, 30)),
+                manager=self.manager,
+                html_text=f"{cursor} Enemy {enemy.id_number}"
+            )
+            self.enemy_options.append(enemy)
+            self.enemy_option_boxes.append(enemy_text)
+            enemy_text.hide()
+        
+
+
+    
+
+    def render(self,player_characters,enemies,num_of_player_turns,character_taking_action):
 
         # Render the menu options
         for i, option in enumerate(self.options):
@@ -239,6 +271,12 @@ class CombatMenus:
                 text = self.enemy_option_boxes[i]
                 text.set_text(f"{cursor} Enemy {enemy.id_number}")
 
+        self.turn_counter_text.set_text(f"Turn: {num_of_player_turns}")
+        self.characters_turn.set_text(f"Whose Turn: {character_taking_action.name}" )
+
+                
+
+        
         self.manager.update(pygame.time.get_ticks() / 1000.0)
         self.manager.draw_ui(self.screen)
 
