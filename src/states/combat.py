@@ -18,6 +18,8 @@ class CombatState:
         self.player_characters.append(game_manager.companion_1)
         self.player_characters.append(game_manager.companion_2)
         self.player_characters.append(game_manager.companion_3)
+        self.result = None
+        self.damage = None
         
         
 
@@ -58,7 +60,7 @@ class CombatState:
                 enemy.rect = enemy_rect
 
             self.combat_menus = \
-                CombatMenus(screen, self.player_characters, self.enemies)
+                CombatMenus(screen, self.player_characters, self.enemies,self.result,self.damage)
             
             self.combat_system = CombatSystem(self.enemies,self.player_characters)
 
@@ -77,7 +79,7 @@ class CombatState:
         
         self.combat_system.check_if_all_enemies_dead()
         self.combat_system.check_if_all_player_characters_dead()
-        if self.combat_system.battle_succesful:
+        if self.combat_system.battle_successful:
             [character.restore_health_and_magic() for character in self.player_characters]
             return 3, True
         if self.combat_system.game_over:
@@ -95,10 +97,13 @@ class CombatState:
                 attack_or_magic_option, entity_selected=self.combat_menus.handle_input()  # Call handle_input method of CombatMenus
                 if entity_selected != None:
                     # Perform the action using the CombatSystem
-                    result = self.combat_system.perform_action(attack_or_magic_option, entity_selected,character_taking_action)
-                    if result == 'Flee':
+                    self.result , self.damage = self.combat_system.perform_action(attack_or_magic_option, entity_selected,character_taking_action)
+                    
+                    if self.result == 'Flee':
                         return 3, True
-                    if attack_or_magic_option != 'Flee':
+                    
+                    if self.damage != None:
+                        
                         Redraw = self.combat_system.check_if_alive(entity_selected)
                         if Redraw == False:
                             self.combat_menus.enemy_dead(self.combat_system.enemies)
@@ -161,6 +166,11 @@ class CombatState:
                 pygame.draw.rect(self.screen, (255, 165, 0), enemy.rect)
         self.combat_menus.render(self.player_characters,self.combat_system.enemies,
                                  self.combat_system.num_turns_player,
-                                 self.player_characters[self.combat_system.player_index])  # Call render method of CombatMenus
+                                 self.player_characters[self.combat_system.player_index],
+                                 self.result, self.damage)  # Call render method of CombatMenus
+        self.result = None
+        self.damage = None
+        
+        
 
         

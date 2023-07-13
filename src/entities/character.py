@@ -5,28 +5,36 @@ class Character:
             "magic_points": 50,
             "strength": "Fire",
             "weakness": "Water",
-            "attack_power": 10
+            "attack_power": 10,
+            "magic_attack_power": 5,
+            "healing_power": 5
         },
         "Player 2": {
             "health": 60,
             "magic_points": 40,
             "strength": "Lightning",
             "weakness": "Earth",
-            "attack_power": 15
+            "attack_power": 15,
+            "magic_attack_power": 5,
+            "healing_power": 5
         },
         "Player 3": {
             "health": 120,
             "magic_points": 80,
             "strength": "Water",
             "weakness": "Fire",
-            "attack_power": 5
+            "attack_power": 5,
+            "magic_attack_power": 5,
+            "healing_power": 5
         },
         "Player 4": {
             "health": 150,
             "magic_points": 75,
             "strength": "Earth",
             "weakness": "Lightning",
-            "attack_power": 10
+            "attack_power": 10,
+            "magic_attack_power": 5,
+            "healing_power": 5
         }
     }
 
@@ -44,6 +52,11 @@ class Character:
         self.strength = data.get("strength")
         self.weakness = data.get("weakness")
         self.attack_power = data.get("attack_power")
+        self.magic_attack_power = data.get("magic_attack_power")
+        self.healing_power = data.get("healing_power")
+
+        self.max_health = data.get("health")
+        self.max_magic_points = data.get("magic_points")
         
         self.rect = None
 
@@ -62,9 +75,8 @@ class Character:
         return Character(x, y, width, height, name)
 
     def restore_health_and_magic(self):
-        data = Character.character_data.get(self.name, {})
-        self.health = data.get("health")
-        self.magic_points = data.get("magic_points")
+        self.health = self.max_health
+        self.magic_points = self.max_magic_points
         self.alive = True
 
         
