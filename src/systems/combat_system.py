@@ -3,11 +3,12 @@ import random
 class CombatSystem:
     def __init__(self, enemies, characters):
         self.enemies = enemies
-        self.characters = characters
+        self.alive_characters = characters
+        self.dead_characters = []
         self.enemies_turn = False
         self.players_turn = True
         self.num_turns_enemies = None
-        self.num_turns_player = self.calculate_num_turns(self.characters)
+        self.num_turns_player = self.calculate_num_turns(self.alive_characters)
         self.player_index = 0
         self.enemy_index = 0
         self.game_over = False
@@ -42,13 +43,20 @@ class CombatSystem:
             self.battle_successful = True
 
     def check_if_all_player_characters_dead(self):
-        alive_characters = [character for character in self.characters if character.alive]
+        alive_characters = [character for character in self.alive_characters if character.alive]
         if (alive_characters == []):
             self.game_over = True
     
-    def reorganize(self):
+    def update_enemy_list(self):
         alive_enemies = [enemy for enemy in self.enemies if enemy.alive]
         self.enemies = alive_enemies
+
+    def update_character_lists(self):
+        alive_characters = [character for character in self.alive_characters if character.alive]
+        dead_characters = [character for character in self.alive_characters if not character.alive]
+        self.alive_characters = alive_characters
+        self.dead_characters = dead_characters
+
 
     def perform_action(self, attack_or_magic_option, target_entity, attacking_character):
         # Perform the specified action based on the given option
@@ -64,7 +72,8 @@ class CombatSystem:
             'Earth': self.perform_magic,
             'Healing': self.perform_magic,
             'Flee': self.perform_flee,
-            'Skip': self.perform_skip
+            'Skip': self.perform_skip,
+            'Scan': self.perform_scan
         }
 
         action_method = action_mapping.get(attack_or_magic_option)
@@ -73,17 +82,21 @@ class CombatSystem:
                 self.magic_points_reduce(attack_or_magic_option, attacking_character)
                 return action_method(attack_or_magic_option,target_entity,attacking_character)
             elif attack_or_magic_option in ['Flee','Skip']:
-                return action_method(), None
+                return action_method()
+            elif attack_or_magic_option in ['Scan']:
+                return action_method(target_entity)
             return action_method(target_entity, attacking_character)
         else:
             return None, None
 
-    
+    def perform_scan(self,target_entity):
+        self.player_index -= 1
+        return "Scan", target_entity
     
         
     def perform_skip(self):
         self.num_turns_player -= 0.5
-        return "Skip"
+        return "Skip", None
 
     def perform_attack(self, target_entity, attacking_character):
         # Perform an attack action with a chance of critical success
@@ -202,8 +215,8 @@ class CombatSystem:
         flee_successful = random.random() < flee_chance
         self.num_turns_player -= 1
         if flee_successful:
-            return "Flee"
-        return flee_successful
+            return "Flee", None
+        return flee_successful, None
     
 
         
@@ -251,7 +264,7 @@ class CombatSystem:
             return "Magic attack (1 turn)"
     
     def handle_enemy_input(self):
-        alive_characters = [character for character in self.characters if character.alive]
+        alive_characters = [character for character in self.alive_characters if character.alive]
         if (alive_characters == []):
             self.game_over = True
             return None, None

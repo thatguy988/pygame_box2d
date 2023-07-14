@@ -12,12 +12,12 @@ class CombatState:
     def __init__(self, screen, key_pressed, game_manager, enemy):
         self.screen = screen
         self.key_pressed = key_pressed
-        self.character = game_manager.character
-        self.player_characters = []
-        self.player_characters.append(self.character)
-        self.player_characters.append(game_manager.companion_1)
-        self.player_characters.append(game_manager.companion_2)
-        self.player_characters.append(game_manager.companion_3)
+        self.starting_player_characters = [
+            game_manager.character,
+            game_manager.companion_1,
+            game_manager.companion_2,
+            game_manager.companion_3
+        ]
         self.result = None
         self.damage = None
         
@@ -60,9 +60,9 @@ class CombatState:
                 enemy.rect = enemy_rect
 
             self.combat_menus = \
-                CombatMenus(screen, self.player_characters, self.enemies,self.result,self.damage)
+                CombatMenus(screen, self.starting_player_characters, self.enemies,self.result,self.damage)
             
-            self.combat_system = CombatSystem(self.enemies,self.player_characters)
+            self.combat_system = CombatSystem(self.enemies,self.starting_player_characters)
 
     @staticmethod
     def duplicate_enemy(enemy):
@@ -80,19 +80,19 @@ class CombatState:
         self.combat_system.check_if_all_enemies_dead()
         self.combat_system.check_if_all_player_characters_dead()
         if self.combat_system.battle_successful:
-            [character.restore_health_and_magic() for character in self.player_characters]
+            [character.restore_health_and_magic() for character in self.starting_player_characters]
             return 3, True
         if self.combat_system.game_over:
             return 1, True
 
         if(self.combat_system.players_turn):
             if(self.combat_system.check_if_players_turn()):
-                character_taking_action = self.player_characters[self.combat_system.player_index]
+                character_taking_action = self.starting_player_characters[self.combat_system.player_index]
                 while(not character_taking_action.alive):
                     self.combat_system.player_index += 1
-                    if(self.combat_system.player_index == len(self.player_characters)):
+                    if(self.combat_system.player_index == len(self.starting_player_characters)):
                         self.combat_system.player_index = 0
-                    character_taking_action = self.player_characters[self.combat_system.player_index]
+                    character_taking_action = self.starting_player_characters[self.combat_system.player_index]
 
                 attack_or_magic_option, entity_selected=self.combat_menus.handle_input()  # Call handle_input method of CombatMenus
                 if entity_selected != None:
@@ -104,14 +104,14 @@ class CombatState:
                     
                     if self.damage != None:
                         
-                        Redraw = self.combat_system.check_if_alive(entity_selected)
-                        if Redraw == False:
-                            self.combat_menus.enemy_dead(self.combat_system.enemies)
-                            self.combat_system.reorganize()
-                            Redraw = True
+                        Alive = self.combat_system.check_if_alive(entity_selected)
+                        if Alive == False:
+                            self.combat_menus.update_enemy_options(self.combat_system.enemies)
+                            self.combat_system.update_enemy_list()
+                            
                         
                     self.combat_system.player_index += 1
-                    if(self.combat_system.player_index == len(self.player_characters)):
+                    if(self.combat_system.player_index == len(self.starting_player_characters)):
                         self.combat_system.player_index = 0
                
             else:
@@ -129,13 +129,17 @@ class CombatState:
 
                 attack_or_magic_option, entity_selected=self.combat_system.handle_enemy_input()
                 self.combat_system.enemy_perform_action(attack_or_magic_option,entity_selected, enemy_taking_action)
-                self.combat_system.check_if_alive(entity_selected)
+                Alive = self.combat_system.check_if_alive(entity_selected)
+                if Alive == False:
+                    self.combat_menus.update_character_options(self.combat_system.alive_characters)
+                    self.combat_menus.update_dead_character_options(self.combat_system.alive_characters)
+                    self.combat_system.update_character_lists()
                 
                 self.combat_system.enemy_index += 1
                 if(self.combat_system.enemy_index == len(self.combat_system.enemies)):
                     self.combat_system.enemy_index = 0
             else:
-                self.combat_system.num_turns_player = self.combat_system.calculate_num_turns(self.player_characters)
+                self.combat_system.num_turns_player = self.combat_system.calculate_num_turns(self.starting_player_characters)
                 self.combat_system.players_turn = True
                 self.combat_system.player_index = 0
                 
@@ -156,7 +160,7 @@ class CombatState:
 
         color_mapping = [(255, 255, 255), (255, 0, 0), (0, 255, 0), (255, 255, 0)]
 
-        for i, character in enumerate(self.player_characters):
+        for i, character in enumerate(self.starting_player_characters):
             if character.alive:
                 color = color_mapping[i % len(color_mapping)]  # Select color based on index
                 pygame.draw.rect(self.screen, color, character.rect)
@@ -164,9 +168,12 @@ class CombatState:
         for i, enemy in enumerate(self.combat_system.enemies):
             if enemy.alive:
                 pygame.draw.rect(self.screen, (255, 165, 0), enemy.rect)
-        self.combat_menus.render(self.player_characters,self.combat_system.enemies,
+        self.combat_menus.render(self.combat_system.alive_characters,
+                                 self.combat_system.dead_characters,
+                                 self.starting_player_characters,
+                                 self.combat_system.enemies,
                                  self.combat_system.num_turns_player,
-                                 self.player_characters[self.combat_system.player_index],
+                                 self.starting_player_characters[self.combat_system.player_index],
                                  self.result, self.damage)  # Call render method of CombatMenus
         self.result = None
         self.damage = None

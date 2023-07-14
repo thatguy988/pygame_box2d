@@ -1,7 +1,7 @@
 class Enemy:
     enemy_data = {
         "slime": {
-            "health": 50,
+            "health": 500,
             "magic_points":30,
             "strength": "Lightning",
             "weakness": "Earth",
@@ -18,6 +18,7 @@ class Enemy:
         self.enemy_type = enemy_type
         data = Enemy.enemy_data.get(enemy_type, {})
         self.health = data.get("health")
+        self.max_health = data.get("health")
         self.magic_points = data.get("magic_points")
         self.strength = data.get("strength")
         self.weakness = data.get("weakness")

@@ -71,7 +71,7 @@ while running:
             else:
                 # return to main menu from platforming state
                 state_stack.pop() #remove pause menu
-                state_stack.pop() #remove platforming state
+                state_stack.pop() #remove platforming state 
                 state_instances[GameState.MAIN_MENU] = MainMenuState(screen, key_pressed, game_manager)
         elif next_state == 2:
             if GameState.PAUSE_MENU not in state_stack:
