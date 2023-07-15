@@ -11,8 +11,10 @@ from entities.npc import NPC
 from leveldata.load_data import load_level_data, get_node_id
 from systems.collision import CollisionSystem 
 from systems.movement import MovementSystem
+from systems.combat_system import CombatSystem
 from camera import Camera
 from UI.textbox import TextBox
+from UI.combat_menu import CombatMenus
 from pygame_gui import UIManager
 
 tile_size = 64
@@ -237,5 +239,58 @@ class GameManager:
                     if tile == 11
                     for npc in [NPC(x * tile_size, y * tile_size, 50, 50, ["Hello, there!", "How are you?", "Nice weather today!"])]
                 ]
+
+    def initialize_combat_state(self,screen,key_pressed,enemy):
+        self.screen = screen
+        self.key_pressed = key_pressed
+        self.starting_player_characters = [
+            self.character,
+            self.companion_1,
+            self.companion_2,
+            self.companion_3
+        ]
+        self.result = None
+        self.damage = None
+        
+        if enemy != None:
+            # Duplicate the enemy object randomly
+            num_enemies = random.randint(3, 5)
+            self.enemies = [self.duplicate_enemy(enemy) for _ in range(num_enemies)]
+
+            # Get the screen dimensions
+            screen_width, screen_height = self.screen.get_size()
+
+            # Calculate the positions for player and enemy rectangles
+            player_width, player_height = 50, 50
+            enemy_width, enemy_height = 50, 50
+
+            player_x = (screen_width // 4) - (player_width // 2)  # Left side center
+            player_y = (screen_height // 6) - (player_height // 1)
+
+            enemy_x = (3 * screen_width // 4) - (enemy_width // 2)  # Right side center
+            enemy_y = (screen_height // 4) - (enemy_height * min(num_enemies, 4) // 2)  # Adjusted for vertical positioning
+
+            
+            self.character.rect = pygame.Rect(player_x, player_y, player_width, player_height)
+            self.companion_1.rect = pygame.Rect(player_x, player_y + 70, 50, 50)
+            self.companion_2.rect = pygame.Rect(player_x, player_y + 140, 50, 50)
+            self.companion_3.rect = pygame.Rect(player_x, player_y + 210, 50, 50)
+
+            # Render the enemy rectangles (orange)
+            self.enemy_rects = []
+            num_enemies_per_column = max(min(num_enemies, 8) // 2, 1)  # Ensure at least 1 enemy per column
+            for i, enemy in enumerate(self.enemies):
+                column_index = i // num_enemies_per_column
+                row_index = i % num_enemies_per_column
+                enemy_x_offset = column_index * (enemy_width + 10)
+                enemy_y_offset = row_index * (enemy_height + 10)
+                enemy_rect = pygame.Rect(enemy_x + enemy_x_offset, enemy_y + enemy_y_offset, enemy_width, enemy_height)
+                enemy.id_number = i+1
+                enemy.rect = enemy_rect
+
+            self.combat_menus = \
+                CombatMenus(screen, self.starting_player_characters, self.enemies,self.result,self.damage)
+            
+            self.combat_system = CombatSystem(self.enemies,self.starting_player_characters,self.combat_menus)
 
 
