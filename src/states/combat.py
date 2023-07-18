@@ -51,7 +51,7 @@ class CombatState:
             game_manager.companion_3.rect = pygame.Rect(player_x, player_y + 210, 50, 50)
 
             # Render the enemy rectangles (orange)
-            self.enemy_rects = []
+            #self.enemy_rects = []
             num_enemies_per_column = max(min(num_enemies, 8) // 2, 1)  # Ensure at least 1 enemy per column
             for i, enemy in enumerate(self.enemies):
                 column_index = i // num_enemies_per_column
@@ -106,6 +106,7 @@ class CombatState:
         for i, enemy in enumerate(self.combat_system.enemies):
             if enemy.alive:
                 pygame.draw.rect(self.screen, (255, 165, 0), enemy.rect)
+                
         self.combat_menus.render(self.combat_system.alive_characters,
                                  self.combat_system.dead_characters,
                                  self.starting_player_characters,

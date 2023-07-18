@@ -9,6 +9,8 @@ BLUE = (0, 0, 255)
 WHITE = (255, 255, 255)
 ORANGE = (255, 165, 0)
 PINK = (255, 165, 255)
+GREEN = (0,255,0)
+RED = (255,0,0)
 tile_size = 64
 
 class PlatformingState:
@@ -76,6 +78,8 @@ class PlatformingState:
         self.game_manager.movement.enemy_movement(self.game_manager.enemies, self.game_manager.enemies_physical_body, 
                                                   self.game_manager.direction_timer, self.game_manager.direction_change_interval, 
                                                   time_step)
+        
+        self.game_manager.movement.kinematic_body_movement(self.game_manager.platforms, self.game_manager.platform_bodies)
 
         self.game_manager.is_jumping = \
             self.game_manager.collision.tile_character_collision(self.game_manager.character, self.game_manager.character_physical_body,
@@ -92,6 +96,12 @@ class PlatformingState:
 
         # Add tiles to game_objects
         game_objects += [(pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size), BLUE) for y, row in enumerate(self.game_manager.level_data) for x, tile in enumerate(row) if tile == 1]
+        
+        #add moving platforms to game_objects
+        game_objects += [(pygame.Rect(platform.x, platform.y, platform.width, platform.height), GREEN) for platform in self.game_manager.platforms if platform.tile_type == 50]
+
+        game_objects += [(pygame.Rect(platform.x, platform.y, platform.width, platform.height), RED) for platform in self.game_manager.platforms if platform.tile_type == 49]
+
 
         # Add NPCs to game_objects
         game_objects += [(pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size), PINK) for y, row in enumerate(self.game_manager.level_data) for x, tile in enumerate(row) if tile == 11]

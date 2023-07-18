@@ -7,7 +7,8 @@ class Character:
             "weakness": "Water",
             "attack_power": 10,
             "magic_attack_power": 5,
-            "healing_power": 5
+            "healing_power": 5,
+            "magic_options": ['Fire','Earth','Revive']
         },
         "Player 2": {
             "health": 60,
@@ -16,7 +17,9 @@ class Character:
             "weakness": "Earth",
             "attack_power": 15,
             "magic_attack_power": 5,
-            "healing_power": 5
+            "healing_power": 5,
+            "magic_options": ['Healing','Revive']
+
         },
         "Player 3": {
             "health": 120,
@@ -25,7 +28,9 @@ class Character:
             "weakness": "Fire",
             "attack_power": 5,
             "magic_attack_power": 5,
-            "healing_power": 5
+            "healing_power": 5,
+            "magic_options": ['Lightning','Healing','Revive']
+
         },
         "Player 4": {
             "health": 150,
@@ -34,7 +39,9 @@ class Character:
             "weakness": "Lightning",
             "attack_power": 10,
             "magic_attack_power": 5,
-            "healing_power": 5
+            "healing_power": 5,
+            "magic_options": ['Water','Earth']
+
         }
     }
 
@@ -59,6 +66,7 @@ class Character:
         self.max_magic_points = data.get("magic_points")
         
         self.rect = None
+        self.magic_options = data.get("magic_options")
 
     def move(self, character_body):
         # Update character position based on the Box2D body

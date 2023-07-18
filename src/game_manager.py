@@ -8,6 +8,7 @@ from Box2D import *
 from entities.character import Character
 from entities.enemy import Enemy 
 from entities.npc import NPC
+from entities.platform import Platform
 from leveldata.load_data import load_level_data, get_node_id
 from systems.collision import CollisionSystem 
 from systems.movement import MovementSystem
@@ -27,6 +28,7 @@ class GameManager:
         self.enemies = []
         self.enemies_physical_body = []
         self.tile_physical_bodies = []
+        self.platforms = []
         self.npcs = []
         self.npcs_physical_body = []
         self.screen = screen
@@ -69,6 +71,56 @@ class GameManager:
             for x, tile in enumerate(row)
             if tile == 1
         ]
+
+        # self.platform_bodies = [
+        #     (
+        #         self.world.CreateKinematicBody(
+        #             position=(x * tile_size, y * tile_size),
+        #             shapes=b2PolygonShape(box=(platform.width / 2 , platform.height / 2)),
+        #             linearVelocity=(0.0, 0.0),  # Set the linear velocity to make the platform move
+        #             linearDamping=0.0,  # Adjust this damping as needed for the desired platform behavior
+        #             angularDamping=0.0
+        #         ),
+        #         self.platforms.append(platform)
+        #     )[0]  # Return the physical body to the list
+        #     for y, row in enumerate(self.level_data)
+        #     for x, tile in enumerate(row)
+        #     if tile == 50  # Assuming tile 50 represents the platform tiles in the level data
+        #     for platform in [Platform.create_platform(x, y,tile)]
+        # ]
+        self.platform_bodies = [
+            (
+                self.world.CreateKinematicBody(
+                    position=(x * tile_size, y * tile_size),
+                    shapes=b2PolygonShape(box=(platform.width / 2, platform.height / 2)),
+                    linearVelocity=(0.0, 0.0),
+                    linearDamping=0.0,
+                    angularDamping=0.0
+                ),
+                self.platforms.append(platform)
+            )[0]
+            for y, row in enumerate(self.level_data)
+            for x, tile in enumerate(row)
+            if tile == 50  # Assuming tile 50 represents the platform tiles in the level data
+            for platform in [Platform.create_platform(x, y, tile)]
+        ] + [
+            (
+                self.world.CreateKinematicBody(
+                    position=(x * tile_size, y * tile_size),
+                    shapes=b2PolygonShape(box=(platform.width / 2, platform.height / 2)),
+                    linearVelocity=(0.0, 0.0),
+                    linearDamping=0.0,
+                    angularDamping=0.0
+                ),
+                self.platforms.append(platform)
+            )[0]
+            for y, row in enumerate(self.level_data)
+            for x, tile in enumerate(row)
+            if tile == 49  # Assuming tile 49 represents another type of platform tiles in the level data
+            for platform in [Platform.create_platform(x, y, tile)]
+        ]
+
+
 
         self.enemies_physical_body = [
             (

@@ -105,7 +105,7 @@ class CombatSystem:
     
         
     def perform_skip(self):
-        return "0 turn", None, "Skip"
+        return "0.5 turn", None, "Skip"
 
     def perform_attack(self, target_entity, attacking_character):
         # Perform an attack action with a chance of critical success
@@ -182,10 +182,10 @@ class CombatSystem:
 
         # Magic attack is not a weakness or strength
         target_entity.health -= 10
-        return "1 turn", 10
+        return "1 turn", 10, magic_selected
         
     def perform_flee(self):
-        flee_chance = 0.5  # 50% chance of success
+        flee_chance = 0.4  # 40% chance of success
         flee_successful = random.random() < flee_chance
         if flee_successful:
             return "0 turn", None, "Flee"
@@ -268,24 +268,21 @@ class CombatSystem:
         self.check_if_all_player_characters_dead()
         if self.battle_successful:
             [character.restore_health_and_magic() for character in self.starting_player_characters]
-            return 3, True
+            return 3, True, None
         if self.game_over:
-            return 1, True
+            return 1, True, None
         if(self.players_turn):
             if(self.check_if_players_turn()):
-                character_taking_action = self.starting_player_characters[self.player_index]
-                while(not character_taking_action.alive):
-                    self.player_index += 1
-                    if(self.player_index == len(self.starting_player_characters)):
-                        self.player_index = 0
-                    character_taking_action = self.starting_player_characters[self.player_index]
+
+                character_taking_action = self.get_Next_Alive_PlayerCharacter()
+                self.update_magic_selection(self.result)
 
                 action_selected, entity_selected=self.combat_ui.handle_input()  # Call handle_input method of CombatMenus
                 if entity_selected != None:
                     self.result , self.damage, self.attack_or_magic_option= self.perform_action(action_selected, entity_selected,character_taking_action)
                     
-                    if self.result == 'Flee':
-                        return 3, True
+                    if self.attack_or_magic_option == 'Flee':
+                        return 3, True, None
                     
                     if self.damage != None:
                         if self.result == 'Revived':
@@ -300,8 +297,7 @@ class CombatSystem:
                             
                     self.increase_player_index(self.result) 
                     self.decrease_turn_counter(self.result)
-                    
-               
+                                   
             else:
                 self.num_turns_enemies = self.calculate_num_turns(self.enemies)
                 self.players_turn = False
@@ -342,12 +338,30 @@ class CombatSystem:
             self.player_index += 1
             if(self.player_index == len(self.starting_player_characters)):
                 self.player_index = 0
-        
+       
 
-    def decrease_turn_counter(self,result):
-        if result == '0 turn':
-            pass
-        elif result == '0.5 turn':
+    def update_magic_selection(self,result):
+        if result != '0 turn':
+            self.combat_ui.update_magic_options(self.starting_player_characters[self.player_index].magic_options)
+            self.result = '0 turn'
+
+    def decrease_turn_counter(self, result):
+        decrement_mapping = {'0 turn': 0, '0.5 turn': 0.5, '1 turn': 1}
+        decrement_value = decrement_mapping.get(result, 0)
+        if decrement_value == 1 and self.num_turns_player % 1 == 0.5:
             self.num_turns_player -= 0.5
-        elif result == '1 turn':
-            self.num_turns_player -= 1
+        else:
+            self.num_turns_player -= decrement_value
+
+
+    def get_Next_Alive_PlayerCharacter(self):
+        character_taking_action = self.starting_player_characters[self.player_index]
+        while not character_taking_action.alive:
+            self.player_index += 1
+            if self.player_index == len(self.starting_player_characters):
+                self.player_index = 0
+            character_taking_action = self.starting_player_characters[self.player_index]
+
+
+        return character_taking_action
+

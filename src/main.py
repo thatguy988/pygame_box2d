@@ -33,7 +33,7 @@ game_manager= GameManager()
 
 # Create state instances dictionary
 state_instances = {
-    GameState.MAIN_MENU: MainMenuState(screen, key_pressed, game_manager),
+    GameState.MAIN_MENU: MainMenuState(screen, key_pressed),
     GameState.PAUSE_MENU: PauseMenuState(screen, key_pressed, game_manager),
     GameState.PLATFORMING: PlatformingState(screen, 1, key_pressed,game_manager),
     GameState.COMBAT:CombatState(screen, key_pressed, game_manager, None)
@@ -72,7 +72,7 @@ while running:
                 # return to main menu from platforming state
                 state_stack.pop() #remove pause menu
                 state_stack.pop() #remove platforming state 
-                state_instances[GameState.MAIN_MENU] = MainMenuState(screen, key_pressed, game_manager)
+                state_instances[GameState.MAIN_MENU] = MainMenuState(screen, key_pressed)
         elif next_state == 2:
             if GameState.PAUSE_MENU not in state_stack:
                 state_stack.append(GameState.PAUSE_MENU)
